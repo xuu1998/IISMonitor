@@ -102,6 +102,7 @@ namespace IISMonitor
             Logger.Log("监控服务启动");
 
             _cts?.Cancel();
+            _cts?.Dispose();
             _cts = new CancellationTokenSource();
 
             // 初始化告警服务
@@ -140,6 +141,8 @@ namespace IISMonitor
             }
             isRunning = false;
             try { _cts?.Cancel(); } catch { }
+            try { _cts?.Dispose(); } catch { }
+            _cts = null;
             Logger.Log("监控服务停止");
         }
 
@@ -310,7 +313,11 @@ namespace IISMonitor
                 string jsonLine = JsonSerializer.Serialize(record, s_jsonOptions);
                 File.AppendAllText(filePath, jsonLine + Environment.NewLine, Encoding.UTF8);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // 记录异常但不中断监控（健康检查结果丢失，但不应导致程序崩溃）
+                System.Diagnostics.Debug.WriteLine($"[PersistHealthResult] 写入失败: {ex.Message}");
+            }
         }
 
         private void CheckAppPools(CancellationToken token)
@@ -450,7 +457,11 @@ namespace IISMonitor
             System.Threading.Tasks.Task.Run(() =>
             {
                 Logger.Log($"{key} 等待恢复信号量...");
-                _recoverySemaphore.Wait();
+                if (!_recoverySemaphore.Wait(TimeSpan.FromMinutes(5)))
+                {
+                    Logger.LogError($"{key} 等待恢复信号量超时(5min)，跳过本次恢复");
+                    return;
+                }
                 try
                 {
                     Logger.Log($"{key} 开始执行恢复");
@@ -619,7 +630,11 @@ namespace IISMonitor
             System.Threading.Tasks.Task.Run(() =>
             {
                 Logger.Log($"{key} 等待恢复信号量...");
-                _recoverySemaphore.Wait();
+                if (!_recoverySemaphore.Wait(TimeSpan.FromMinutes(5)))
+                {
+                    Logger.LogError($"{key} 等待恢复信号量超时(5min)，跳过本次恢复");
+                    return;
+                }
                 try
                 {
                     Logger.Log($"{key} 开始执行恢复");

@@ -203,8 +203,13 @@ namespace IISMonitor
                     Logger.Log($"站点 {siteName} 当前状态为 {site.State}，尝试停止...");
                     site.Stop();
                     serverManager.CommitChanges();
-                    Logger.Log($"站点 {siteName} 已停止");
-                    return true;
+                    // 验证停止后状态
+                    site = serverManager.Sites[siteName];
+                    bool stopped = site.State == ObjectState.Stopped;
+                    Logger.Log(stopped
+                        ? $"站点 {siteName} 已停止"
+                        : $"站点 {siteName} 停止后状态为 {site.State}");
+                    return stopped;
                 }
             }
             catch (Exception ex)
@@ -314,9 +319,14 @@ namespace IISMonitor
                     }
                     pool.Start();
                     serverManager.CommitChanges();
-                    Logger.Log($"已启动应用程序池: {poolName}");
+                    // 验证启动后状态
+                    pool = serverManager.ApplicationPools[poolName];
+                    bool started = pool.State == ObjectState.Started;
+                    Logger.Log(started
+                        ? $"已启动应用程序池: {poolName}"
+                        : $"应用程序池 {poolName} 启动后状态为 {pool.State}");
                     Thread.Sleep(3000);
-                    return true;
+                    return started;
                 }
             }
             catch (Exception ex)
@@ -345,9 +355,14 @@ namespace IISMonitor
                     }
                     pool.Stop();
                     serverManager.CommitChanges();
-                    Logger.Log($"已停止应用程序池: {poolName}");
+                    // 验证停止后状态
+                    pool = serverManager.ApplicationPools[poolName];
+                    bool stopped = pool.State == ObjectState.Stopped;
+                    Logger.Log(stopped
+                        ? $"已停止应用程序池: {poolName}"
+                        : $"应用程序池 {poolName} 停止后状态为 {pool.State}");
                     Thread.Sleep(2000);
-                    return true;
+                    return stopped;
                 }
             }
             catch (Exception ex)
@@ -502,35 +517,41 @@ namespace IISMonitor
 
         /// <summary>
         /// 运行外部进程并捕获标准输出/错误，超时则终止。
+        /// 使用 using 释放 Process 资源，异步读取 stdout/stderr 避免管道死锁。
         /// </summary>
         private static int RunProcess(string fileName, string args, int timeoutSeconds, out string stdout, out string stderr)
         {
             stdout = "";
             stderr = "";
-            Process process = new Process();
-            process.StartInfo.FileName = fileName;
-            process.StartInfo.Arguments = args;
-            process.StartInfo.UseShellExecute = false;
-            process.StartInfo.RedirectStandardOutput = true;
-            process.StartInfo.RedirectStandardError = true;
-            process.StartInfo.CreateNoWindow = true;
-            process.Start();
-
-            // 异步读取避免死锁（进程写满管道而 WaitForExit 阻塞）
-            stdout = process.StandardOutput.ReadToEnd();
-            stderr = process.StandardError.ReadToEnd();
-            bool exited = process.WaitForExit(timeoutSeconds * 1000);
-            if (!exited)
+            using (var process = new Process())
             {
-                try { process.Kill(); } catch { }
-                throw new TimeoutException($"{fileName} 在 {timeoutSeconds}s 内未结束");
+                process.StartInfo.FileName = fileName;
+                process.StartInfo.Arguments = args;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+
+                // 异步读取 stdout/stderr，避免同步 ReadToEnd 导致管道死锁
+                var stdoutTask = process.StandardOutput.ReadToEndAsync();
+                var stderrTask = process.StandardError.ReadToEndAsync();
+
+                bool exited = process.WaitForExit(timeoutSeconds * 1000);
+                if (!exited)
+                {
+                    try { process.Kill(); } catch { }
+                    throw new TimeoutException($"{fileName} 在 {timeoutSeconds}s 内未结束");
+                }
+
+                // WaitForExit() 无参重载确保异步读取完成后再取结果
+                process.WaitForExit();
+                stdout = stdoutTask.Result;
+                stderr = stderrTask.Result;
+                return process.ExitCode;
             }
-            return process.ExitCode;
         }
 
-        /// <summary>
-        /// 轮询 ServerManager 直到任意应用池处于 Started 状态，或超时
-        /// </summary>
         /// <summary>
         /// 轮询 ServerManager 直到任意应用池处于 Started 状态，或超时。
         /// 轮询过程中若发现应用池处于 Stopped，主动尝试 Start（不干等 IIS 自行启动）。
