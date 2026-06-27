@@ -19,7 +19,7 @@ namespace IISMonitor.Infrastructure
             var field = value.GetType().GetField(value.ToString());
             if (field == null) return value.ToString();
 
-            var attr = field.GetCustomAttribute<DescriptionAttribute>();
+            var attr = Attribute.GetCustomAttribute(field, typeof(DescriptionAttribute)) as DescriptionAttribute;
             return attr != null && !string.IsNullOrEmpty(attr.Description)
                 ? attr.Description
                 : value.ToString();
@@ -29,11 +29,11 @@ namespace IISMonitor.Infrastructure
         /// 根据中文描述反查枚举值
         /// </summary>
         public static bool TryParseByDescription<TEnum>(string description, out TEnum result)
-            where TEnum : struct, Enum
+            where TEnum : struct
         {
             foreach (TEnum value in Enum.GetValues(typeof(TEnum)))
             {
-                if (value.GetDescription() == description)
+                if (((Enum)(object)value).GetDescription() == description)
                 {
                     result = value;
                     return true;

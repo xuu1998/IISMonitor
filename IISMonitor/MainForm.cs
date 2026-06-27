@@ -621,7 +621,7 @@ namespace IISMonitor
                 {
                     iconColor = Color.Red; // 已停止
                 }
-                else if (Volatile.Read(ref _hasAnyFailure) == 1)
+                else if (System.Threading.Thread.VolatileRead(ref _hasAnyFailure) == 1)
                 {
                     iconColor = Color.Orange; // 有故障
                 }
