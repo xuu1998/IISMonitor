@@ -176,7 +176,6 @@ namespace IISMonitor
             dgvSites.Columns.Clear();
             dgvSites.Rows.Clear();
             dgvSites.Columns.Add("Url", "监控站点 URL");
-            dgvSites.Columns["Url"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dgvSites.AllowUserToAddRows = true;
             if (config.MonitoredSites != null)
             {
@@ -188,7 +187,6 @@ namespace IISMonitor
             dgvAppPools.Columns.Clear();
             dgvAppPools.Rows.Clear();
             dgvAppPools.Columns.Add("Name", "应用程序池");
-            dgvAppPools.Columns["Name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dgvAppPools.AllowUserToAddRows = true;
             if (config.MonitoredAppPools != null)
             {

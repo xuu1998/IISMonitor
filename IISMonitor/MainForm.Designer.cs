@@ -174,6 +174,7 @@ namespace IISMonitor
             // 
             // dgvSites
             // 
+            this.dgvSites.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvSites.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvSites.Location = new System.Drawing.Point(18, 120);
             this.dgvSites.Margin = new System.Windows.Forms.Padding(4);
@@ -185,6 +186,7 @@ namespace IISMonitor
             // 
             // dgvAppPools
             // 
+            this.dgvAppPools.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvAppPools.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvAppPools.Location = new System.Drawing.Point(588, 120);
             this.dgvAppPools.Margin = new System.Windows.Forms.Padding(4);
