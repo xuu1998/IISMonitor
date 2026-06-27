@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
 using IISMonitor.Models;
 
 namespace IISMonitor
@@ -161,7 +161,7 @@ namespace IISMonitor
                 HealthRecord record;
                 try
                 {
-                    record = JsonSerializer.Deserialize<HealthRecord>(line);
+                    record = JsonConvert.DeserializeObject<HealthRecord>(line);
                 }
                 catch
                 {

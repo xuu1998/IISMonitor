@@ -1,5 +1,5 @@
 using System;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace IISMonitor.Models
 {
@@ -8,19 +8,19 @@ namespace IISMonitor.Models
     /// </summary>
     public class HealthRecord
     {
-        [JsonPropertyName("timestamp")]
+        [JsonProperty("timestamp")]
         public DateTime Timestamp { get; set; }
 
-        [JsonPropertyName("checkType")]
+        [JsonProperty("checkType")]
         public string CheckType { get; set; } = "";
 
-        [JsonPropertyName("target")]
+        [JsonProperty("target")]
         public string Target { get; set; } = "";
 
-        [JsonPropertyName("result")]
+        [JsonProperty("result")]
         public string Result { get; set; } = "";
 
-        [JsonPropertyName("detail")]
+        [JsonProperty("detail")]
         public string Detail { get; set; } = "";
     }
 }

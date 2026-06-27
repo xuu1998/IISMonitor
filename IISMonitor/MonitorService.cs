@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Security.Principal;
 using System.Text;
-using System.Text.Json;
+using Newtonsoft.Json;
 using System.Threading;
 using System.Windows.Forms;
 using IISMonitor.Models;
@@ -204,7 +204,7 @@ namespace IISMonitor
                     int everyNTicks = Math.Max(1, (int)Math.Ceiling((double)interval / checkInterval));
                     if (_tickCount % everyNTicks == 0)
                     {
-                        System.Threading.Tasks.Task.Run(() => CollectResourceMetrics(), token);
+                        System.Threading.Tasks.Task.Factory.StartNew(() => CollectResourceMetrics(), token);
                     }
                 }
             }
@@ -291,8 +291,6 @@ namespace IISMonitor
         /// <summary>
         /// 持久化健康检查结果到 JSONL 文件
         /// </summary>
-        private static readonly JsonSerializerOptions s_jsonOptions = new JsonSerializerOptions();
-
         private void PersistHealthResult(string checkType, string target, bool success, string detail = "")
         {
             try
@@ -310,7 +308,7 @@ namespace IISMonitor
                     Result = success ? "成功" : "失败",
                     Detail = detail
                 };
-                string jsonLine = JsonSerializer.Serialize(record, s_jsonOptions);
+                string jsonLine = JsonConvert.SerializeObject(record);
                 File.AppendAllText(filePath, jsonLine + Environment.NewLine, Encoding.UTF8);
             }
             catch (Exception ex)
@@ -454,7 +452,7 @@ namespace IISMonitor
             Logger.Log($"达到故障阈值，开始处理: {poolName}");
             _alertService?.SendAlert(key, $"应用程序池 {poolName} 故障，准备恢复", AlertLevel.Warning);
 
-            System.Threading.Tasks.Task.Run(() =>
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 Logger.Log($"{key} 等待恢复信号量...");
                 if (!_recoverySemaphore.Wait(TimeSpan.FromMinutes(5)))
@@ -627,7 +625,7 @@ namespace IISMonitor
             Logger.Log($"站点故障: {siteUrl}");
             _alertService?.SendAlert(key, $"站点 {siteUrl} 无法访问", AlertLevel.Warning);
 
-            System.Threading.Tasks.Task.Run(() =>
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
             {
                 Logger.Log($"{key} 等待恢复信号量...");
                 if (!_recoverySemaphore.Wait(TimeSpan.FromMinutes(5)))

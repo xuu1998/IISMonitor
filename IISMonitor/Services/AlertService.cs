@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
+using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 namespace IISMonitor
@@ -53,7 +53,7 @@ namespace IISMonitor
             // 异步发送，避免阻塞监控线程
             if (_config.EnableSmtp && !string.IsNullOrEmpty(_config.SmtpHost))
             {
-                Task.Run(() =>
+                Task.Factory.StartNew(() =>
                 {
                     try { SendSmtp(subject, message); }
                     catch (Exception ex) { Logger.LogError("SMTP 告警发送线程异常", ex); }
@@ -62,7 +62,7 @@ namespace IISMonitor
 
             if (_config.EnableWebhook && !string.IsNullOrEmpty(_config.WebhookUrl))
             {
-                Task.Run(() =>
+                Task.Factory.StartNew(() =>
                 {
                     try { SendWebhook(subject, message, level); }
                     catch (Exception ex) { Logger.LogError("Webhook 告警发送线程异常", ex); }
@@ -113,7 +113,7 @@ namespace IISMonitor
                     timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                     source = "IISMonitor"
                 };
-                string json = JsonSerializer.Serialize(payload);
+                string json = JsonConvert.SerializeObject(payload);
                 byte[] data = System.Text.Encoding.UTF8.GetBytes(json);
 
                 var request = (System.Net.HttpWebRequest)System.Net.WebRequest.Create(_config.WebhookUrl);

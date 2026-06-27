@@ -82,8 +82,8 @@ namespace IISMonitor.Tests
                 Result = "ok",
                 Detail = "running"
             };
-            var json = System.Text.Json.JsonSerializer.Serialize(r);
-            var deserialized = System.Text.Json.JsonSerializer.Deserialize<HealthRecord>(json);
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(r);
+            var deserialized = Newtonsoft.Json.JsonConvert.DeserializeObject<HealthRecord>(json);
 
             Assert.AreEqual(r.Timestamp, deserialized.Timestamp);
             Assert.AreEqual("AppPool", deserialized.CheckType);

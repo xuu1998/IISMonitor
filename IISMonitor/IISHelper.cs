@@ -517,7 +517,7 @@ namespace IISMonitor
 
         /// <summary>
         /// 运行外部进程并捕获标准输出/错误，超时则终止。
-        /// 使用 using 释放 Process 资源，异步读取 stdout/stderr 避免管道死锁。
+        /// 使用 using 释放 Process 资源，双线程异步读取避免管道死锁。
         /// </summary>
         private static int RunProcess(string fileName, string args, int timeoutSeconds, out string stdout, out string stderr)
         {
@@ -533,9 +533,13 @@ namespace IISMonitor
                 process.StartInfo.CreateNoWindow = true;
                 process.Start();
 
-                // 异步读取 stdout/stderr，避免同步 ReadToEnd 导致管道死锁
-                var stdoutTask = process.StandardOutput.ReadToEndAsync();
-                var stderrTask = process.StandardError.ReadToEndAsync();
+                // 用独立线程读取 stdout，避免管道缓冲区满导致死锁
+                string stdoutResult = "";
+                string stderrResult = "";
+                var stdoutThread = new System.Threading.Thread(() => { try { stdoutResult = process.StandardOutput.ReadToEnd(); } catch { } });
+                var stderrThread = new System.Threading.Thread(() => { try { stderrResult = process.StandardError.ReadToEnd(); } catch { } });
+                stdoutThread.Start();
+                stderrThread.Start();
 
                 bool exited = process.WaitForExit(timeoutSeconds * 1000);
                 if (!exited)
@@ -544,10 +548,11 @@ namespace IISMonitor
                     throw new TimeoutException($"{fileName} 在 {timeoutSeconds}s 内未结束");
                 }
 
-                // WaitForExit() 无参重载确保异步读取完成后再取结果
-                process.WaitForExit();
-                stdout = stdoutTask.Result;
-                stderr = stderrTask.Result;
+                // 等待读取线程完成
+                stdoutThread.Join(5000);
+                stderrThread.Join(5000);
+                stdout = stdoutResult;
+                stderr = stderrResult;
                 return process.ExitCode;
             }
         }
