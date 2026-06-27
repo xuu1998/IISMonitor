@@ -26,7 +26,19 @@ namespace IISMonitor
         StopStartAppPool,
 
         [Description("先停止再启动应用池，失败则重启 IIS")]
-        StopStartAppPoolThenIIS
+        StopStartAppPoolThenIIS,
+
+        [Description("仅重启站点（不影响其他站点和应用池）")]
+        SiteOnly,
+
+        [Description("先重启站点，失败则重启整个 IIS")]
+        SiteThenIIS,
+
+        [Description("回收资源并重启应用池，失败则重启 IIS")]
+        RecycleThenVerify,
+
+        [Description("先回收应用池，再重启应用池")]
+        RecycleThenRestart
     }
 
     /// <summary>

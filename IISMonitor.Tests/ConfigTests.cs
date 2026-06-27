@@ -99,7 +99,7 @@ namespace IISMonitor.Tests
         [Test]
         public void RestartStrategy_AllEnumValues_AreDefined()
         {
-            Assert.AreEqual(5, Enum.GetValues(typeof(RestartStrategyType)).Length);
+            Assert.AreEqual(9, Enum.GetValues(typeof(RestartStrategyType)).Length);
         }
 
         [Test]

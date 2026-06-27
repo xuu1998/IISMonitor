@@ -180,6 +180,58 @@ namespace IISMonitor
         }
 
         /// <summary>
+        /// 停止指定名称的 IIS 站点。若已停止则视为成功。
+        /// </summary>
+        public static bool StopSite(string siteName)
+        {
+            if (string.IsNullOrEmpty(siteName)) return false;
+            try
+            {
+                using (var serverManager = new ServerManager())
+                {
+                    var site = serverManager.Sites[siteName];
+                    if (site == null)
+                    {
+                        Logger.LogError($"站点 {siteName} 不存在，无法停止");
+                        return false;
+                    }
+                    if (site.State == ObjectState.Stopped)
+                    {
+                        Logger.Log($"站点 {siteName} 已处于停止状态");
+                        return true;
+                    }
+                    Logger.Log($"站点 {siteName} 当前状态为 {site.State}，尝试停止...");
+                    site.Stop();
+                    serverManager.CommitChanges();
+                    Logger.Log($"站点 {siteName} 已停止");
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"停止站点 {siteName} 失败", ex);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 重启单个 IIS 站点（Stop + Start），不影响其他站点和应用池。
+        /// 返回 true 表示启动后站点处于 Started 状态。
+        /// </summary>
+        public static bool RestartSite(string siteName)
+        {
+            if (string.IsNullOrEmpty(siteName)) return false;
+            Logger.Log($"正在重启站点 {siteName}（不影响其他站点）...");
+            if (!StopSite(siteName))
+            {
+                Logger.LogError($"站点 {siteName} 停止失败，跳过重启");
+                return false;
+            }
+            Thread.Sleep(1000); // 给 IIS 一点时间释放端口
+            return StartSite(siteName);
+        }
+
+        /// <summary>
         /// 获取指定站点名称的运行状态。返回 null 表示站点不存在或读取失败。
         /// </summary>
         public static ObjectState? GetSiteState(string siteName)

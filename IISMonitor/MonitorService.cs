@@ -506,9 +506,93 @@ namespace IISMonitor
                     OnStatusUpdate?.Invoke("应用池恢复失败，尝试重启整个 IIS");
                     return IISHelper.RestartIIS(config.IisResetTimeoutSeconds, config.IisReadyTimeoutSeconds);
 
+                case RestartStrategyType.RecycleThenVerify:
+                    return ExecuteRecycleThenVerify(poolName);
+
+                case RestartStrategyType.RecycleThenRestart:
+                    return ExecuteRecycleThenRestart(poolName);
+
                 default:
                     return false;
             }
+        }
+
+        /// <summary>
+        /// 回收资源并验证应用池运行状态。
+        /// 1. RecycleAppPool — 回收 Worker Process，释放内存等资源
+        /// 2. 等待 3s 让新 Worker Process 启动
+        /// 3. 检查应用池是否在运行，不在则主动 StartAppPool
+        /// 4. 仍失败则兜底重启 IIS
+        /// </summary>
+        private bool ExecuteRecycleThenVerify(string poolName)
+        {
+            Logger.Log($"[{poolName}] 回收应用池以释放资源...");
+            bool recycled = IISHelper.RecycleAppPool(poolName);
+            if (!recycled)
+            {
+                Logger.LogError($"[{poolName}] 回收失败，尝试重启整个 IIS");
+                return IISHelper.RestartIIS(config.IisResetTimeoutSeconds, config.IisReadyTimeoutSeconds);
+            }
+
+            // 等待新 Worker Process 启动
+            const int waitMs = 3000;
+            Logger.Log($"[{poolName}] 回收完成，等待 {waitMs}ms 让 Worker Process 重启...");
+            Thread.Sleep(waitMs);
+
+            // 验证应用池是否在运行
+            bool running = IISHelper.IsAppPoolRunning(poolName);
+            if (running)
+            {
+                Logger.Log($"[{poolName}] 应用池运行正常");
+                return true;
+            }
+
+            // 应用池未运行，主动启动
+            Logger.Log($"[{poolName}] 回收后应用池未运行，尝试启动...");
+            bool started = IISHelper.StartAppPool(poolName);
+            if (started)
+            {
+                Logger.Log($"[{poolName}] 应用池启动成功");
+                return true;
+            }
+
+            // 启动也失败，兜底重启 IIS
+            Logger.LogError($"[{poolName}] 启动失败，尝试重启整个 IIS");
+            return IISHelper.RestartIIS(config.IisResetTimeoutSeconds, config.IisReadyTimeoutSeconds);
+        }
+
+        /// <summary>
+        /// 先回收应用池，若回收后仍不可用则停止再启动应用池。
+        /// 回收是轻量操作（仅重启 Worker Process），停-启是重量操作（完整重启应用池对象）。
+        /// </summary>
+        private bool ExecuteRecycleThenRestart(string poolName)
+        {
+            Logger.Log($"[{poolName}] 第1步：回收应用池...");
+            bool recycled = IISHelper.RecycleAppPool(poolName);
+            if (recycled)
+            {
+                Thread.Sleep(3000); // 等待新 Worker Process 启动
+                if (IISHelper.IsAppPoolRunning(poolName))
+                {
+                    Logger.Log($"[{poolName}] 回收后应用池运行正常");
+                    return true;
+                }
+                Logger.Log($"[{poolName}] 回收后应用池未运行，进入第2步");
+            }
+            else
+            {
+                Logger.Log($"[{poolName}] 回收失败，进入第2步");
+            }
+
+            Logger.Log($"[{poolName}] 第2步：停止并重新启动应用池...");
+            bool restarted = IISHelper.StopStartAppPool(poolName);
+            if (restarted)
+            {
+                Logger.Log($"[{poolName}] 重启应用池成功");
+                return true;
+            }
+            Logger.LogError($"[{poolName}] 重启应用池失败");
+            return false;
         }
 
         /// <summary>
@@ -555,30 +639,57 @@ namespace IISMonitor
 
         /// <summary>
         /// 执行站点恢复并验证（同步、可阻塞，应在后台线程调用）。
-        /// 若对应应用池已在运行（说明 AppPool 恢复链已成功重启 IIS），则跳过重复的 IIS 重启，
-        /// 直接进入 HTTP 验证，避免 Site 恢复与 AppPool 恢复各跑一次 iisreset。
+        /// 根据重启策略决定恢复动作：
+        /// - SiteOnly / SiteThenIIS：先尝试重启单个站点，不影响其他站点
+        /// - 其他策略：走应用池恢复链
         /// </summary>
         private void ExecuteSiteRecovery(string siteUrl)
         {
+            string siteName = IISHelper.InferSiteNameFromUrl(siteUrl);
             string inferredPool = InferAppPoolFromUrl(siteUrl);
+
+            // 站点级策略：优先重启单个站点
+            if (config.RestartStrategy == RestartStrategyType.SiteOnly ||
+                config.RestartStrategy == RestartStrategyType.SiteThenIIS)
+            {
+                if (!string.IsNullOrEmpty(siteName))
+                {
+                    bool siteOk = IISHelper.RestartSite(siteName);
+                    if (siteOk)
+                    {
+                        Logger.Log($"站点 {siteName} 重启成功");
+                        VerifySiteRecovery(siteUrl);
+                        return;
+                    }
+                    Logger.LogError($"站点 {siteName} 重启失败");
+                }
+
+                // SiteThenIIS：站点重启失败，兜底到 IIS 重启
+                if (config.RestartStrategy == RestartStrategyType.SiteThenIIS)
+                {
+                    Logger.Log($"站点重启失败，尝试重启整个 IIS（SiteThenIIS 策略兜底）...");
+                    IISHelper.RestartIIS(config.IisResetTimeoutSeconds, config.IisReadyTimeoutSeconds);
+                }
+                VerifySiteRecovery(siteUrl);
+                return;
+            }
+
+            // 应用池级策略：走已有的应用池恢复链
             if (!string.IsNullOrEmpty(inferredPool))
             {
-                // 先检查应用池当前是否已在运行（AppPool 恢复链可能刚成功）
                 bool poolAlreadyRunning = IISHelper.IsAppPoolRunning(inferredPool);
                 if (poolAlreadyRunning)
                 {
-                    Logger.Log($"站点 {siteUrl} 对应应用池 {inferredPool} 已在运行，跳过重复 IIS 重启，直接验证站点");
+                    Logger.Log($"站点 {siteUrl} 对应应用池 {inferredPool} 已在运行，跳过重复恢复，直接验证站点");
                 }
                 else
                 {
-                    // 应用池未运行，走应用池恢复链（同步执行，含 IIS 兜底）
                     bool success = ExecuteAppPoolRecovery(inferredPool);
                     if (!success)
                     {
                         Logger.LogError($"站点 {siteUrl} 对应应用池 {inferredPool} 恢复失败");
                     }
                 }
-                // 无论应用池恢复是否成功，都以站点 HTTP 实测为准
                 VerifySiteRecovery(siteUrl);
                 return;
             }
@@ -596,7 +707,6 @@ namespace IISMonitor
                 {
                     Logger.LogError($"站点 {siteUrl} IIS 重启操作失败");
                 }
-                // 无论 IIS 操作是否成功，都以站点 HTTP 实测为准
                 VerifySiteRecovery(siteUrl);
             }
             else

@@ -152,6 +152,12 @@ namespace IISMonitor
 
             txtCheckInterval.Text = config.CheckIntervalSeconds.ToString();
             numFailThreshold.Value = config.ConsecutiveFailuresBeforeRestart;
+            // 从枚举动态填充重启策略下拉框（新策略只需加 Description 特性即可）
+            cmbRestartStrategy.Items.Clear();
+            foreach (RestartStrategyType value in Enum.GetValues(typeof(RestartStrategyType)))
+            {
+                cmbRestartStrategy.Items.Add(value.GetDescription());
+            }
             cmbRestartStrategy.SelectedItem = config.RestartStrategy.GetDescription();
             chkHttpCheck.Checked = config.EnableHttpCheck;
             chkAppPoolCheck.Checked = config.EnableAppPoolCheck;

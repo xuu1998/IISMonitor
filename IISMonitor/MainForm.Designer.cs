@@ -141,7 +141,7 @@ namespace IISMonitor
             // 
             // btnExport
             // 
-            this.btnExport.Location = new System.Drawing.Point(456, 20);
+            this.btnExport.Location = new System.Drawing.Point(403, 18);
             this.btnExport.Margin = new System.Windows.Forms.Padding(4);
             this.btnExport.Name = "btnExport";
             this.btnExport.Size = new System.Drawing.Size(120, 45);
@@ -152,7 +152,7 @@ namespace IISMonitor
             // 
             // btnAlertSettings
             // 
-            this.btnAlertSettings.Location = new System.Drawing.Point(584, 20);
+            this.btnAlertSettings.Location = new System.Drawing.Point(531, 20);
             this.btnAlertSettings.Margin = new System.Windows.Forms.Padding(4);
             this.btnAlertSettings.Name = "btnAlertSettings";
             this.btnAlertSettings.Size = new System.Drawing.Size(120, 45);
@@ -163,7 +163,7 @@ namespace IISMonitor
             // 
             // btnLogViewer
             // 
-            this.btnLogViewer.Location = new System.Drawing.Point(712, 18);
+            this.btnLogViewer.Location = new System.Drawing.Point(659, 20);
             this.btnLogViewer.Margin = new System.Windows.Forms.Padding(4);
             this.btnLogViewer.Name = "btnLogViewer";
             this.btnLogViewer.Size = new System.Drawing.Size(120, 45);
@@ -196,9 +196,9 @@ namespace IISMonitor
             // 
             // btnPickSites
             // 
-            this.btnPickSites.Location = new System.Drawing.Point(856, 18);
+            this.btnPickSites.Location = new System.Drawing.Point(795, 20);
             this.btnPickSites.Name = "btnPickSites";
-            this.btnPickSites.Size = new System.Drawing.Size(120, 45);
+            this.btnPickSites.Size = new System.Drawing.Size(124, 45);
             this.btnPickSites.TabIndex = 21;
             this.btnPickSites.Text = "从本机选站点";
             this.btnPickSites.UseVisualStyleBackColor = true;
@@ -206,9 +206,9 @@ namespace IISMonitor
             // 
             // btnPickAppPools
             // 
-            this.btnPickAppPools.Location = new System.Drawing.Point(996, 20);
+            this.btnPickAppPools.Location = new System.Drawing.Point(925, 20);
             this.btnPickAppPools.Name = "btnPickAppPools";
-            this.btnPickAppPools.Size = new System.Drawing.Size(120, 45);
+            this.btnPickAppPools.Size = new System.Drawing.Size(144, 45);
             this.btnPickAppPools.TabIndex = 22;
             this.btnPickAppPools.Text = "从本机选应用池";
             this.btnPickAppPools.UseVisualStyleBackColor = true;
@@ -216,7 +216,7 @@ namespace IISMonitor
             // 
             // btnAbout
             // 
-            this.btnAbout.Location = new System.Drawing.Point(1130, 18);
+            this.btnAbout.Location = new System.Drawing.Point(1075, 20);
             this.btnAbout.Name = "btnAbout";
             this.btnAbout.Size = new System.Drawing.Size(75, 45);
             this.btnAbout.TabIndex = 23;
@@ -265,16 +265,11 @@ namespace IISMonitor
             // cmbRestartStrategy
             // 
             this.cmbRestartStrategy.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbRestartStrategy.Items.AddRange(new object[] {
-            "仅回收应用程序池",
-            "先回收应用池，失败则重启 IIS",
-            "直接重启 IIS",
-            "先停止再启动应用池",
-            "先停止再启动应用池，失败则重启 IIS"});
+            this.cmbRestartStrategy.Items.AddRange(new object[] { });
             this.cmbRestartStrategy.Location = new System.Drawing.Point(558, 82);
             this.cmbRestartStrategy.Margin = new System.Windows.Forms.Padding(4);
             this.cmbRestartStrategy.Name = "cmbRestartStrategy";
-            this.cmbRestartStrategy.Size = new System.Drawing.Size(178, 26);
+            this.cmbRestartStrategy.Size = new System.Drawing.Size(342, 26);
             this.cmbRestartStrategy.TabIndex = 9;
             // 
             // chkHttpCheck
@@ -282,7 +277,7 @@ namespace IISMonitor
             this.chkHttpCheck.AutoSize = true;
             this.chkHttpCheck.Checked = true;
             this.chkHttpCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkHttpCheck.Location = new System.Drawing.Point(762, 86);
+            this.chkHttpCheck.Location = new System.Drawing.Point(925, 83);
             this.chkHttpCheck.Margin = new System.Windows.Forms.Padding(4);
             this.chkHttpCheck.Name = "chkHttpCheck";
             this.chkHttpCheck.Size = new System.Drawing.Size(70, 22);
@@ -294,7 +289,7 @@ namespace IISMonitor
             this.chkAppPoolCheck.AutoSize = true;
             this.chkAppPoolCheck.Checked = true;
             this.chkAppPoolCheck.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkAppPoolCheck.Location = new System.Drawing.Point(852, 86);
+            this.chkAppPoolCheck.Location = new System.Drawing.Point(1004, 83);
             this.chkAppPoolCheck.Margin = new System.Windows.Forms.Padding(4);
             this.chkAppPoolCheck.Name = "chkAppPoolCheck";
             this.chkAppPoolCheck.Size = new System.Drawing.Size(124, 22);
@@ -365,7 +360,7 @@ namespace IISMonitor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1220, 837);
+            this.ClientSize = new System.Drawing.Size(1170, 837);
             this.Controls.Add(this.chkResourceMonitor);
             this.Controls.Add(this.chkAutoMinimize);
             this.Controls.Add(this.chkDarkMode);
