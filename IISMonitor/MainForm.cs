@@ -21,6 +21,7 @@ namespace IISMonitor
             InitializeComponent();
             InitializeTrayIcon();
             LoadConfig();
+
             monitor = new MonitorService();
             monitor.OnStatusUpdate += UpdateStatus;
             monitor.OnCheckResult += UpdateCheckResult;
@@ -169,6 +170,7 @@ namespace IISMonitor
             dgvSites.Columns.Clear();
             dgvSites.Rows.Clear();
             dgvSites.Columns.Add("Url", "监控站点 URL");
+            dgvSites.Columns["Url"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dgvSites.AllowUserToAddRows = true;
             if (config.MonitoredSites != null)
             {
@@ -180,6 +182,7 @@ namespace IISMonitor
             dgvAppPools.Columns.Clear();
             dgvAppPools.Rows.Clear();
             dgvAppPools.Columns.Add("Name", "应用程序池");
+            dgvAppPools.Columns["Name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             dgvAppPools.AllowUserToAddRows = true;
             if (config.MonitoredAppPools != null)
             {
@@ -312,6 +315,84 @@ namespace IISMonitor
                 return;
             }
             System.Diagnostics.Process.Start("explorer.exe", logDir);
+        }
+
+        /// <summary>
+        /// 关于对话框：显示程序信息与 GitHub 仓库地址，点击链接可在浏览器打开。
+        /// </summary>
+        private void BtnAbout_Click(object sender, EventArgs e)
+        {
+            const string repoUrl = "https://github.com/xuu1998/IISMonitor";
+            string version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "1.0.0.0";
+
+            using (var form = new Form())
+            {
+                form.Text = "关于 IISMonitor";
+                form.Size = new Size(520, 320);
+                form.StartPosition = FormStartPosition.CenterParent;
+                form.FormBorderStyle = FormBorderStyle.FixedDialog;
+                form.MaximizeBox = false;
+                form.MinimizeBox = false;
+
+                var lblTitle = new Label
+                {
+                    Text = "IISMonitor",
+                    Font = new Font("Segoe UI", 16, FontStyle.Bold),
+                    Location = new Point(20, 20),
+                    AutoSize = true
+                };
+                form.Controls.Add(lblTitle);
+
+                var lblVersion = new Label
+                {
+                    Text = $"版本 {version}",
+                    Location = new Point(20, 65),
+                    AutoSize = true
+                };
+                form.Controls.Add(lblVersion);
+
+                var lblDesc = new Label
+                {
+                    Text = "IIS 站点与应用程序池健康监控、自动恢复工具",
+                    Location = new Point(20, 95),
+                    AutoSize = true
+                };
+                form.Controls.Add(lblDesc);
+
+                var lblRepoCaption = new Label
+                {
+                    Text = "GitHub 仓库:",
+                    Location = new Point(20, 140),
+                    AutoSize = true
+                };
+                form.Controls.Add(lblRepoCaption);
+
+                var linkRepo = new LinkLabel
+                {
+                    Text = repoUrl,
+                    Location = new Point(20, 165),
+                    AutoSize = true,
+                    MaximumSize = new Size(460, 0)
+                };
+                linkRepo.LinkClicked += (s, ev) =>
+                {
+                    try { System.Diagnostics.Process.Start(repoUrl); }
+                    catch { }
+                };
+                form.Controls.Add(linkRepo);
+
+                var btnClose = new Button
+                {
+                    Text = "关闭",
+                    Location = new Point(400, 240),
+                    Size = new Size(90, 28)
+                };
+                btnClose.Click += (s, ev) => form.Close();
+                form.Controls.Add(btnClose);
+                form.AcceptButton = btnClose;
+
+                form.ShowDialog(this);
+            }
         }
 
         /// <summary>

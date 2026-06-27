@@ -34,6 +34,7 @@ namespace IISMonitor
         private System.Windows.Forms.DataGridView dgvAppPools;
         private System.Windows.Forms.Button btnPickSites;
         private System.Windows.Forms.Button btnPickAppPools;
+        private System.Windows.Forms.Button btnAbout;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.TextBox txtCheckInterval;
         private System.Windows.Forms.NumericUpDown numFailThreshold;
@@ -63,6 +64,7 @@ namespace IISMonitor
             this.dgvAppPools = new System.Windows.Forms.DataGridView();
             this.btnPickSites = new System.Windows.Forms.Button();
             this.btnPickAppPools = new System.Windows.Forms.Button();
+            this.btnAbout = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.txtCheckInterval = new System.Windows.Forms.TextBox();
             this.numFailThreshold = new System.Windows.Forms.NumericUpDown();
@@ -128,7 +130,7 @@ namespace IISMonitor
             // 
             // btnConfig
             // 
-            this.btnConfig.Location = new System.Drawing.Point(276, 18);
+            this.btnConfig.Location = new System.Drawing.Point(275, 18);
             this.btnConfig.Margin = new System.Windows.Forms.Padding(4);
             this.btnConfig.Name = "btnConfig";
             this.btnConfig.Size = new System.Drawing.Size(120, 45);
@@ -176,7 +178,7 @@ namespace IISMonitor
             this.dgvSites.Location = new System.Drawing.Point(18, 120);
             this.dgvSites.Margin = new System.Windows.Forms.Padding(4);
             this.dgvSites.Name = "dgvSites";
-            this.dgvSites.RowHeadersWidth = 62;
+            this.dgvSites.RowHeadersWidth = 30;
             this.dgvSites.Size = new System.Drawing.Size(540, 270);
             this.dgvSites.TabIndex = 4;
             this.dgvSites.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgvSites_CellDoubleClick);
@@ -187,7 +189,7 @@ namespace IISMonitor
             this.dgvAppPools.Location = new System.Drawing.Point(588, 120);
             this.dgvAppPools.Margin = new System.Windows.Forms.Padding(4);
             this.dgvAppPools.Name = "dgvAppPools";
-            this.dgvAppPools.RowHeadersWidth = 62;
+            this.dgvAppPools.RowHeadersWidth = 30;
             this.dgvAppPools.Size = new System.Drawing.Size(540, 270);
             this.dgvAppPools.TabIndex = 5;
             this.dgvAppPools.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgvAppPools_CellDoubleClick);
@@ -211,6 +213,16 @@ namespace IISMonitor
             this.btnPickAppPools.Text = "从本机选应用池";
             this.btnPickAppPools.UseVisualStyleBackColor = true;
             this.btnPickAppPools.Click += new System.EventHandler(this.BtnPickAppPools_Click);
+            // 
+            // btnAbout
+            // 
+            this.btnAbout.Location = new System.Drawing.Point(1130, 18);
+            this.btnAbout.Name = "btnAbout";
+            this.btnAbout.Size = new System.Drawing.Size(75, 45);
+            this.btnAbout.TabIndex = 23;
+            this.btnAbout.Text = "关于";
+            this.btnAbout.UseVisualStyleBackColor = true;
+            this.btnAbout.Click += new System.EventHandler(this.BtnAbout_Click);
             // 
             // lblStatus
             // 
@@ -353,7 +365,7 @@ namespace IISMonitor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1137, 837);
+            this.ClientSize = new System.Drawing.Size(1220, 837);
             this.Controls.Add(this.chkResourceMonitor);
             this.Controls.Add(this.chkAutoMinimize);
             this.Controls.Add(this.chkDarkMode);
@@ -362,6 +374,7 @@ namespace IISMonitor
             this.Controls.Add(this.btnExport);
             this.Controls.Add(this.btnPickSites);
             this.Controls.Add(this.btnPickAppPools);
+            this.Controls.Add(this.btnAbout);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
