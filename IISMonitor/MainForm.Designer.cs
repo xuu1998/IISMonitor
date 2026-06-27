@@ -121,7 +121,7 @@ namespace IISMonitor
             // chkAutoStart
             // 
             this.chkAutoStart.AutoSize = true;
-            this.chkAutoStart.Location = new System.Drawing.Point(588, 405);
+            this.chkAutoStart.Location = new System.Drawing.Point(712, 405);
             this.chkAutoStart.Name = "chkAutoStart";
             this.chkAutoStart.Size = new System.Drawing.Size(160, 22);
             this.chkAutoStart.TabIndex = 20;
@@ -267,7 +267,6 @@ namespace IISMonitor
             // cmbRestartStrategy
             // 
             this.cmbRestartStrategy.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbRestartStrategy.Items.AddRange(new object[] { });
             this.cmbRestartStrategy.Location = new System.Drawing.Point(558, 82);
             this.cmbRestartStrategy.Margin = new System.Windows.Forms.Padding(4);
             this.cmbRestartStrategy.Name = "cmbRestartStrategy";
@@ -301,7 +300,7 @@ namespace IISMonitor
             // chkDarkMode
             // 
             this.chkDarkMode.AutoSize = true;
-            this.chkDarkMode.Location = new System.Drawing.Point(762, 405);
+            this.chkDarkMode.Location = new System.Drawing.Point(738, 499);
             this.chkDarkMode.Margin = new System.Windows.Forms.Padding(4);
             this.chkDarkMode.Name = "chkDarkMode";
             this.chkDarkMode.Size = new System.Drawing.Size(106, 22);
@@ -365,7 +364,6 @@ namespace IISMonitor
             this.ClientSize = new System.Drawing.Size(1170, 837);
             this.Controls.Add(this.chkResourceMonitor);
             this.Controls.Add(this.chkAutoMinimize);
-            this.Controls.Add(this.chkDarkMode);
             this.Controls.Add(this.btnLogViewer);
             this.Controls.Add(this.btnAlertSettings);
             this.Controls.Add(this.btnExport);
@@ -388,6 +386,7 @@ namespace IISMonitor
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.chkAutoStart);
             this.Controls.Add(this.lstStatus);
+            this.Controls.Add(this.chkDarkMode);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
             this.Text = "IIS 监控看板";
