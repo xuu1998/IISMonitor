@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Threading;
+using IISMonitor.Models;
 using Microsoft.Web.Administration;
 
 namespace IISMonitor
@@ -622,6 +624,129 @@ namespace IISMonitor
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 采集所有应用池的性能指标：工作进程 PID、内存、连接数、请求速率、队列长度。
+        /// </summary>
+        public static List<AppPoolMetrics> GetAppPoolMetrics()
+        {
+            var result = new List<AppPoolMetrics>();
+            try
+            {
+                using (var sm = new ServerManager())
+                {
+                    foreach (var pool in sm.ApplicationPools)
+                    {
+                        var m = new AppPoolMetrics
+                        {
+                            PoolName = pool.Name,
+                            IsRunning = pool.State == ObjectState.Started
+                        };
+                        try
+                        {
+                            var wps = pool.WorkerProcesses;
+                            foreach (var wp in wps)
+                            {
+                                m.WorkerProcessPids.Add(wp.ProcessId);
+                            }
+
+                            if (m.WorkerProcessPids.Count == 0)
+                            {
+                                m.Error = m.IsRunning ? "空闲(无请求)" : "已停止";
+                            }
+                            else
+                            {
+                                double totalMemMb = 0;
+                                foreach (var pid in m.WorkerProcessPids)
+                                {
+                                    try
+                                    {
+                                        using (var proc = Process.GetProcessById(pid))
+                                        {
+                                            totalMemMb += proc.WorkingSet64 / 1048576.0;
+                                        }
+                                    }
+                                    catch { }
+                                }
+                                m.MemoryMb = Math.Round(totalMemMb, 1);
+                                ReadIisCounters(m);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            m.Error = ex.Message;
+                        }
+                        result.Add(m);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                result.Add(new AppPoolMetrics
+                {
+                    PoolName = "(采集失败)",
+                    Error = ex.Message
+                });
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// 通过 PerformanceCounter 读取 IIS 请求指标。
+        /// NextValue() 首次调用返回 0（rate counter 需要两次采样），因此预读一次再取值。
+        /// </summary>
+        private static void ReadIisCounters(AppPoolMetrics m)
+        {
+            foreach (var pid in m.WorkerProcessPids)
+            {
+                string[] instanceFormats = new string[]
+                {
+                    pid + "_" + m.PoolName,
+                    pid + "__" + m.PoolName,
+                    pid.ToString()
+                };
+
+                foreach (string inst in instanceFormats)
+                {
+                    try
+                    {
+                        using (var c = new PerformanceCounter("W3SVC_W3WP", "Active Requests", inst, true))
+                        {
+                            c.NextValue();
+                            System.Threading.Thread.Sleep(150);
+                            m.ActiveRequests += (long)c.NextValue();
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+
+                foreach (string inst in instanceFormats)
+                {
+                    try
+                    {
+                        using (var c = new PerformanceCounter("W3SVC_W3WP", "Total Requests/Sec", inst, true))
+                        {
+                            c.NextValue();
+                            System.Threading.Thread.Sleep(500);
+                            m.RequestsPerSec += c.NextValue();
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            m.RequestsPerSec = Math.Round(m.RequestsPerSec, 1);
+
+            try
+            {
+                using (var qLen = new PerformanceCounter("ASP.NET", "Requests Queued", string.Empty, true))
+                {
+                    m.QueueLength = (long)qLen.NextValue();
+                }
+            }
+            catch { }
         }
     }
 

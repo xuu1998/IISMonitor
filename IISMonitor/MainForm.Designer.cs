@@ -23,6 +23,11 @@ namespace IISMonitor
         }
 
         private System.Windows.Forms.ListBox lstStatus;
+        private System.Windows.Forms.TabControl tabBottom;
+        private System.Windows.Forms.TabPage tabLog;
+        private System.Windows.Forms.TabPage tabMetrics;
+        private System.Windows.Forms.DataGridView dgvMetrics;
+        private System.Windows.Forms.Button btnRefreshMetrics;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.Button btnStop;
         private System.Windows.Forms.CheckBox chkAutoStart;
@@ -53,6 +58,11 @@ namespace IISMonitor
         private void InitializeComponent()
         {
             this.lstStatus = new System.Windows.Forms.ListBox();
+            this.tabBottom = new System.Windows.Forms.TabControl();
+            this.tabLog = new System.Windows.Forms.TabPage();
+            this.tabMetrics = new System.Windows.Forms.TabPage();
+            this.dgvMetrics = new System.Windows.Forms.DataGridView();
+            this.btnRefreshMetrics = new System.Windows.Forms.Button();
             this.btnStart = new System.Windows.Forms.Button();
             this.btnStop = new System.Windows.Forms.Button();
             this.chkAutoStart = new System.Windows.Forms.CheckBox();
@@ -85,15 +95,77 @@ namespace IISMonitor
             // lstStatus
             // 
             this.lstStatus.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left)));
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right));
             this.lstStatus.Font = new System.Drawing.Font("Consolas", 9F);
             this.lstStatus.FormattingEnabled = true;
             this.lstStatus.ItemHeight = 22;
-            this.lstStatus.Location = new System.Drawing.Point(18, 445);
-            this.lstStatus.Margin = new System.Windows.Forms.Padding(4);
+            this.lstStatus.Location = new System.Drawing.Point(0, 0);
+            this.lstStatus.Margin = new System.Windows.Forms.Padding(0);
             this.lstStatus.Name = "lstStatus";
-            this.lstStatus.Size = new System.Drawing.Size(1108, 224);
+            this.lstStatus.Size = new System.Drawing.Size(1098, 330);
             this.lstStatus.TabIndex = 0;
+            // 
+            // tabBottom
+            // 
+            this.tabBottom.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right));
+            this.tabBottom.Controls.Add(this.tabLog);
+            this.tabBottom.Controls.Add(this.tabMetrics);
+            this.tabBottom.Location = new System.Drawing.Point(18, 445);
+            this.tabBottom.Name = "tabBottom";
+            this.tabBottom.SelectedIndex = 0;
+            this.tabBottom.Size = new System.Drawing.Size(1114, 370);
+            this.tabBottom.TabIndex = 30;
+            // 
+            // tabLog
+            // 
+            this.tabLog.Controls.Add(this.lstStatus);
+            this.tabLog.Location = new System.Drawing.Point(4, 28);
+            this.tabLog.Name = "tabLog";
+            this.tabLog.Padding = new System.Windows.Forms.Padding(0);
+            this.tabLog.Size = new System.Drawing.Size(1106, 338);
+            this.tabLog.TabIndex = 0;
+            this.tabLog.Text = "监控日志";
+            this.tabLog.UseVisualStyleBackColor = true;
+            // 
+            // tabMetrics
+            // 
+            this.tabMetrics.Controls.Add(this.btnRefreshMetrics);
+            this.tabMetrics.Controls.Add(this.dgvMetrics);
+            this.tabMetrics.Location = new System.Drawing.Point(4, 28);
+            this.tabMetrics.Name = "tabMetrics";
+            this.tabMetrics.Padding = new System.Windows.Forms.Padding(0);
+            this.tabMetrics.Size = new System.Drawing.Size(1106, 338);
+            this.tabMetrics.TabIndex = 1;
+            this.tabMetrics.Text = "应用池性能";
+            this.tabMetrics.UseVisualStyleBackColor = true;
+            // 
+            // dgvMetrics
+            // 
+            this.dgvMetrics.AllowUserToAddRows = false;
+            this.dgvMetrics.AllowUserToDeleteRows = false;
+            this.dgvMetrics.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right));
+            this.dgvMetrics.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvMetrics.Location = new System.Drawing.Point(0, 40);
+            this.dgvMetrics.Name = "dgvMetrics";
+            this.dgvMetrics.ReadOnly = true;
+            this.dgvMetrics.RowHeadersWidth = 30;
+            this.dgvMetrics.Size = new System.Drawing.Size(1106, 298);
+            this.dgvMetrics.TabIndex = 0;
+            // 
+            // btnRefreshMetrics
+            // 
+            this.btnRefreshMetrics.Location = new System.Drawing.Point(3, 5);
+            this.btnRefreshMetrics.Name = "btnRefreshMetrics";
+            this.btnRefreshMetrics.Size = new System.Drawing.Size(100, 30);
+            this.btnRefreshMetrics.TabIndex = 1;
+            this.btnRefreshMetrics.Text = "刷新数据";
+            this.btnRefreshMetrics.UseVisualStyleBackColor = true;
+            this.btnRefreshMetrics.Click += new System.EventHandler(this.BtnRefreshMetrics_Click);
             // 
             // btnStart
             // 
@@ -174,7 +246,6 @@ namespace IISMonitor
             // 
             // dgvSites
             // 
-            this.dgvSites.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvSites.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvSites.Location = new System.Drawing.Point(18, 120);
             this.dgvSites.Margin = new System.Windows.Forms.Padding(4);
@@ -186,7 +257,6 @@ namespace IISMonitor
             // 
             // dgvAppPools
             // 
-            this.dgvAppPools.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.dgvAppPools.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvAppPools.Location = new System.Drawing.Point(588, 120);
             this.dgvAppPools.Margin = new System.Windows.Forms.Padding(4);
@@ -385,13 +455,14 @@ namespace IISMonitor
             this.Controls.Add(this.btnStop);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.chkAutoStart);
-            this.Controls.Add(this.lstStatus);
+            this.Controls.Add(this.tabBottom);
             this.Controls.Add(this.chkDarkMode);
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "MainForm";
             this.Text = "IIS 监控看板";
             ((System.ComponentModel.ISupportInitialize)(this.dgvSites)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvAppPools)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvMetrics)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numFailThreshold)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

@@ -66,6 +66,7 @@ namespace IISMonitor
         public event Action<string> OnStatusUpdate;
         public event Action<CheckType, string, bool> OnCheckResult;
         public event Action<ResourceSnapshot> OnResourceSnapshot;
+        public event Action<List<AppPoolMetrics>> OnAppPoolMetrics;
 
         public bool IsRunning => isRunning;
 
@@ -207,6 +208,9 @@ namespace IISMonitor
                         System.Threading.Tasks.Task.Factory.StartNew(() => CollectResourceMetrics(), token);
                     }
                 }
+
+                // 4. 采集应用池指标
+                CollectAppPoolMetrics();
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -255,6 +259,22 @@ namespace IISMonitor
             catch (Exception ex)
             {
                 Logger.LogError("采集资源指标失败", ex);
+            }
+        }
+
+        /// <summary>
+        /// 采集应用程序池指标
+        /// </summary>
+        private void CollectAppPoolMetrics()
+        {
+            try
+            {
+                var metrics = IISHelper.GetAppPoolMetrics();
+                OnAppPoolMetrics?.Invoke(metrics);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("采集应用池指标失败", ex);
             }
         }
 

@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 using IISMonitor.Infrastructure;
+using IISMonitor.Models;
 using Timer = System.Windows.Forms.Timer;
 
 namespace IISMonitor
@@ -15,6 +17,7 @@ namespace IISMonitor
         private MonitorConfig config;
         private int _hasAnyFailure = 0;
         private IISMonitor.UI.HealthChart _healthChart;
+        private System.Threading.Timer _metricsTimer;
 
         public MainForm()
         {
@@ -22,10 +25,21 @@ namespace IISMonitor
             InitializeTrayIcon();
             LoadConfig();
 
+            // .NET 4.0 DataGridView 布局 bug：AutoSizeColumnsMode=Fill 在 OnHandleCreated 期间触发重入异常
+            // 不设置任何 AutoSizeColumnsMode，改用 Resize 事件手动调整列宽
+            this.Shown += (s, ev) =>
+            {
+                ResizeGridColumns(dgvSites);
+                ResizeGridColumns(dgvAppPools);
+            };
+            dgvSites.Resize += (s, ev) => ResizeGridColumns(dgvSites);
+            dgvAppPools.Resize += (s, ev) => ResizeGridColumns(dgvAppPools);
+
             monitor = new MonitorService();
             monitor.OnStatusUpdate += UpdateStatus;
             monitor.OnCheckResult += UpdateCheckResult;
             monitor.OnResourceSnapshot += UpdateResourceChart;
+            monitor.OnAppPoolMetrics += UpdateAppPoolMetrics;
 
             InitHealthChart();
 
@@ -33,6 +47,17 @@ namespace IISMonitor
             uiTimer.Interval = 2000;
             uiTimer.Tick += (s, e) => RefreshStatus();
             uiTimer.Start();
+
+            // 独立定时刷新应用池性能数据（每 10 秒）
+            _metricsTimer = new System.Threading.Timer(_ =>
+            {
+                try
+                {
+                    var metrics = IISHelper.GetAppPoolMetrics();
+                    UpdateAppPoolMetrics(metrics);
+                }
+                catch { }
+            }, null, 3000, 10000);
 
             this.Load += MainForm_FirstShown;
         }
@@ -586,6 +611,108 @@ namespace IISMonitor
             _healthChart?.RecordResource("CPU", snapshot.CpuPercent / 100.0);
             _healthChart?.RecordResource("内存", snapshot.MemoryPercent / 100.0);
             _healthChart?.RecordResource("磁盘", snapshot.DiskPercent / 100.0);
+        }
+
+        private void UpdateAppPoolMetrics(List<AppPoolMetrics> metrics)
+        {
+            if (this.InvokeRequired)
+            {
+                this.Invoke(new Action<List<AppPoolMetrics>>(UpdateAppPoolMetrics), metrics);
+                return;
+            }
+            try
+            {
+                // 确保列已初始化
+                if (dgvMetrics.Columns.Count == 0)
+                {
+                    dgvMetrics.Columns.Add("PoolName", "应用池");
+                    dgvMetrics.Columns.Add("Pids", "PID");
+                    dgvMetrics.Columns.Add("Workers", "进程数");
+                    dgvMetrics.Columns.Add("Memory", "内存(MB)");
+                    dgvMetrics.Columns.Add("ActiveReq", "活动请求");
+                    dgvMetrics.Columns.Add("RPS", "请求/s");
+                    dgvMetrics.Columns.Add("Queue", "队列长度");
+                    dgvMetrics.Columns.Add("Error", "状态");
+                    dgvMetrics.Columns["PoolName"].FillWeight = 20;
+                    dgvMetrics.Columns["Pids"].FillWeight = 12;
+                    dgvMetrics.Columns["Workers"].FillWeight = 8;
+                    dgvMetrics.Columns["Memory"].FillWeight = 10;
+                    dgvMetrics.Columns["ActiveReq"].FillWeight = 12;
+                    dgvMetrics.Columns["RPS"].FillWeight = 10;
+                    dgvMetrics.Columns["Queue"].FillWeight = 10;
+                    dgvMetrics.Columns["Error"].FillWeight = 18;
+                }
+
+                dgvMetrics.Rows.Clear();
+                foreach (var m in metrics)
+                {
+                    string pids = m.WorkerProcessPids.Count > 0
+                        ? string.Join(", ", m.WorkerProcessPids)
+                        : "-";
+                    string error = m.IsRunning
+                        ? (m.Error ?? "正常")
+                        : "已停止";
+                    dgvMetrics.Rows.Add(
+                        m.PoolName,
+                        pids,
+                        m.WorkerProcessCount.ToString(),
+                        m.WorkerProcessCount > 0 ? m.MemoryMb.ToString("F1") : "-",
+                        m.WorkerProcessCount > 0 ? m.ActiveRequests.ToString() : "-",
+                        m.WorkerProcessCount > 0 ? m.RequestsPerSec.ToString("F1") : "-",
+                        m.WorkerProcessCount > 0 ? m.QueueLength.ToString() : "-",
+                        error);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("刷新应用池性能面板失败", ex);
+            }
+        }
+
+        private void BtnRefreshMetrics_Click(object sender, EventArgs e)
+        {
+            btnRefreshMetrics.Enabled = false;
+            btnRefreshMetrics.Text = "刷新中...";
+            System.Threading.Tasks.Task.Factory.StartNew(() =>
+            {
+                try
+                {
+                    var metrics = IISHelper.GetAppPoolMetrics();
+                    UpdateAppPoolMetrics(metrics);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("手动刷新应用池指标失败", ex);
+                }
+                finally
+                {
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            btnRefreshMetrics.Enabled = true;
+                            btnRefreshMetrics.Text = "刷新数据";
+                        }));
+                    }
+                }
+            });
+        }
+
+        /// <summary>
+        /// 手动让 DataGridView 的列填满控件宽度（替代 AutoSizeColumnsMode.Fill，避免 .NET 4.0 布局 bug）
+        /// </summary>
+        private void ResizeGridColumns(DataGridView grid)
+        {
+            if (grid.Columns.Count == 0) return;
+            try
+            {
+                int totalWidth = grid.ClientSize.Width - grid.RowHeadersWidth;
+                if (totalWidth <= 0) return;
+                int colWidth = totalWidth / grid.Columns.Count;
+                foreach (DataGridViewColumn col in grid.Columns)
+                    col.Width = colWidth;
+            }
+            catch { }
         }
 
         private void RefreshStatus()
