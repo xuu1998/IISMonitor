@@ -107,3 +107,7 @@
 - 重启整个 IIS 会影响服务器上所有站点，请谨慎使用 `IISOnly` 策略
 - 应用池性能监控依赖 `W3SVC_W3WP` 和 `ASP.NET` 性能计数器，需要 IIS 已安装并运行
 - .NET 4.0 目标框架确保在 Windows Server 2008 R2 SP1 上无需安装更高版本 .NET 运行时
+
+## 开源协议
+
+本项目基于 [MIT 协议](LICENSE) 开源。
