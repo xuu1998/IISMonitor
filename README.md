@@ -1,5 +1,7 @@
 # IIS 监控看板
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 兼容 Windows Server 2008+ / .NET Framework 4.0 的 IIS 健康监控、自动重启与性能监控工具。
 
 ## 功能
